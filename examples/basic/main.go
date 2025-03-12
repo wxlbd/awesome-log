@@ -2,39 +2,14 @@ package main
 
 import (
 	"fmt"
-	"os"
-	"path/filepath"
 	"time"
 
-	logger "github.com/wxlbd/awesome-log"
+	log "github.com/wxlbd/awesome-log"
 	"go.uber.org/zap"
 )
 
 func main() {
-	// 获取当前工作目录
-	currentDir, err := os.Getwd()
-	if err != nil {
-		fmt.Printf("获取工作目录失败: %v\n", err)
-		os.Exit(1)
-	}
-
-	// 使用自定义选项初始化
-	if err := logger.Init(
-		logger.WithLevel("debug"),
-		logger.WithColor(true),
-		logger.WithFileRotation(
-			filepath.Join(currentDir, "logs", "app.log"),
-			100,  // 100MB
-			7,    // 7天
-			10,   // 保留10个备份
-			true, // 启用压缩
-		),
-		logger.WithFileFormat("json"),
-		logger.WithTimeFormat("2006-01-02 15:04:05.000"),
-	); err != nil {
-		fmt.Printf("初始化日志失败: %v\n", err)
-		os.Exit(1)
-	}
+	logger := log.NewLogger("")
 	defer logger.Sync()
 
 	// 基本日志示例
@@ -62,7 +37,12 @@ func main() {
 		zap.String("table", "users"),
 		zap.Error(fmt.Errorf("主键冲突")),
 	)
-	logger.Fatal("这是一条致命日志", zap.String("error", "致命错误"))
 	// 等待一秒，确保日志写入
 	time.Sleep(time.Second)
+	logger1 := logger.WithName("new name")
+	fmt.Println("logger1:", logger, logger1)
+
+	logger1.Info("这是一个新的日志实例")
+	logger.Fatal("这是一条致命日志", zap.String("error", "致命错误"))
+
 }
