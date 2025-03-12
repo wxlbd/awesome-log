@@ -44,7 +44,7 @@ func GetConsoleEncoder(enableColor bool, timeFormat string) zapcore.EncoderConfi
 		LevelKey:       "level",
 		NameKey:        "logger",
 		CallerKey:      "caller",
-		FunctionKey:    "func",
+		FunctionKey:    zapcore.OmitKey, // 不记录函数名
 		MessageKey:     "msg",
 		StacktraceKey:  "stacktrace",
 		LineEnding:     zapcore.DefaultLineEnding,
@@ -68,8 +68,8 @@ func GetFileEncoder(timeFormat string) zapcore.EncoderConfig {
 		TimeKey:        "time",
 		LevelKey:       "level",
 		NameKey:        "logger",
-		CallerKey:      "caller",
-		FunctionKey:    "func",
+		CallerKey:      "caller",        // 调用者
+		FunctionKey:    zapcore.OmitKey, // 不记录函数名
 		MessageKey:     "msg",
 		StacktraceKey:  "stacktrace",
 		LineEnding:     zapcore.DefaultLineEnding,
