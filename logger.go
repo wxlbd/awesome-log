@@ -268,3 +268,91 @@ func Fatalf(template string, args ...interface{}) {
 func Sync() error {
 	return globalLogger.Sync()
 }
+
+// WithName 从当前 Logger 实例创建一个新的命名 logger
+func (l *Logger) WithName(name string) *Logger {
+	loggerMutex.Lock()
+	defer loggerMutex.Unlock()
+
+	// 双重检查，确保在获取锁的过程中没有其他goroutine创建了logger
+	if logger, exists := loggerMap[name]; exists {
+		return logger
+	}
+
+	// 使用当前 logger 的配置创建新的 logger
+	config := l.config
+	logger := &Logger{
+		config: config,
+	}
+
+	var cores []zapcore.Core
+
+	// 控制台输出
+	consoleEncoderConfig := internal.GetConsoleEncoder(config.EnableColor, config.TimeFormat)
+	consoleEncoder := zapcore.NewConsoleEncoder(consoleEncoderConfig)
+	consoleCore := zapcore.NewCore(
+		consoleEncoder,
+		zapcore.Lock(os.Stdout),
+		internal.GetZapLevel(config.Level),
+	)
+	cores = append(cores, consoleCore)
+
+	// 文件输出
+	if config.WriteToFile {
+		// 为每个命名logger创建独立的日志文件
+		filename := config.FileConfig.Filename
+		if name != "" {
+			ext := filepath.Ext(filename)
+			filename = filename[:len(filename)-len(ext)] + "." + name + ext
+		}
+
+		// 确保日志目录存在
+		logDir := filepath.Dir(filename)
+		if err := os.MkdirAll(logDir, 0755); err != nil {
+			return nil
+		}
+
+		// 创建日志写入器
+		writer := &lumberjack.Logger{
+			Filename:   filename,
+			MaxSize:    config.FileConfig.MaxSize,
+			MaxBackups: config.FileConfig.MaxBackups,
+			MaxAge:     config.FileConfig.MaxAge,
+			Compress:   config.FileConfig.Compress,
+			LocalTime:  true,
+		}
+
+		fileEncoderConfig := internal.GetFileEncoder(config.TimeFormat)
+		var fileEncoder zapcore.Encoder
+		if config.FileConfig.Format == "json" {
+			fileEncoder = zapcore.NewJSONEncoder(fileEncoderConfig)
+		} else {
+			fileEncoder = zapcore.NewConsoleEncoder(fileEncoderConfig)
+		}
+
+		fileCore := zapcore.NewCore(
+			fileEncoder,
+			zapcore.AddSync(writer),
+			internal.GetZapLevel(config.Level),
+		)
+		cores = append(cores, fileCore)
+	}
+
+	// 创建Logger
+	core := zapcore.NewTee(cores...)
+	zapLogger := zap.New(core).Named(name)
+	if config.RecordCaller {
+		zapLogger = zapLogger.WithOptions(zap.AddCaller(), zap.AddCallerSkip(1))
+	}
+
+	// 设置堆栈跟踪级别
+	stackLevel := internal.GetZapLevel(config.StackLevel)
+	zapLogger = zapLogger.WithOptions(zap.AddStacktrace(stackLevel))
+
+	logger.zap = zapLogger
+	logger.sugar = zapLogger.Sugar()
+
+	// 保存到映射中
+	loggerMap[name] = logger
+	return logger
+}
