@@ -19,6 +19,8 @@ type Config struct {
 	RecordCaller bool `json:"recordCaller" yaml:"recordCaller"`
 	// 时间格式
 	TimeFormat string `json:"timeFormat" yaml:"timeFormat"`
+	// 堆栈跟踪级别
+	StackLevel string `json:"stackLevel" yaml:"stackLevel"`
 }
 
 // FileConfig 文件输出配置
@@ -40,10 +42,13 @@ type FileConfig struct {
 // DefaultConfig 返回默认配置
 func DefaultConfig() *Config {
 	return &Config{
-		Level:       "info",
-		Format:      "console",
-		WriteToFile: false,
-		EnableColor: true,
+		Level:        "info",
+		Format:       "console",
+		WriteToFile:  false,
+		EnableColor:  true,
+		RecordCaller: true,
+		StackLevel:   "fatal",
+		TimeFormat:   "2006-01-02 15:04:05.000",
 		FileConfig: FileConfig{
 			Filename:   "logs/app.log",
 			MaxSize:    100,
@@ -52,8 +57,6 @@ func DefaultConfig() *Config {
 			Compress:   true,
 			Format:     "json",
 		},
-		RecordCaller: true,
-		TimeFormat:   "2006-01-02 15:04:05.000",
 	}
 }
 
@@ -89,6 +92,13 @@ func WithColor(enable bool) Option {
 func WithCaller(enable bool) Option {
 	return func(c *Config) {
 		c.RecordCaller = enable
+	}
+}
+
+// WithStackLevel 设置堆栈跟踪级别
+func WithStackLevel(level string) Option {
+	return func(c *Config) {
+		c.StackLevel = level
 	}
 }
 
