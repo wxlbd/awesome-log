@@ -174,7 +174,7 @@ func (s *PaymentService) ProcessPayment(orderID int, amount float64) (*Payment, 
 
 	// 模拟随机支付失败
 	if time.Now().UnixNano()%2 == 0 {
-		s.log.Error("支付处理失败",
+		s.log.Warn("支付处理失败",
 			zap.Int("order_id", orderID),
 			zap.Float64("amount", amount),
 			zap.String("reason", "余额不足"),

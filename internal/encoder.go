@@ -33,8 +33,8 @@ func CustomCallerEncoder(caller zapcore.EntryCaller, enc zapcore.PrimitiveArrayE
 	if rel, err := filepath.Rel(rootDir, path); err == nil {
 		path = rel
 	}
-	// 格式化输出：文件名:行号
-	enc.AppendString(fmt.Sprintf("%s:%d", path, caller.Line))
+	// 格式化输出：文件名:行号，统一宽度为15个字符
+	enc.AppendString(fmt.Sprintf("%-15s", fmt.Sprintf("%s:%d", path, caller.Line)))
 }
 
 // GetConsoleEncoder 获取控制台编码器配置
@@ -54,9 +54,9 @@ func GetConsoleEncoder(enableColor bool, timeFormat string) zapcore.EncoderConfi
 	}
 
 	if enableColor {
-		encoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
+		encoderConfig.EncodeLevel = GetColorLevelEncoder()
 	} else {
-		encoderConfig.EncodeLevel = zapcore.CapitalLevelEncoder
+		encoderConfig.EncodeLevel = GetPlainLevelEncoder()
 	}
 
 	return encoderConfig
@@ -73,7 +73,7 @@ func GetFileEncoder(timeFormat string) zapcore.EncoderConfig {
 		MessageKey:     "msg",
 		StacktraceKey:  "stacktrace",
 		LineEnding:     zapcore.DefaultLineEnding,
-		EncodeLevel:    zapcore.CapitalLevelEncoder,
+		EncodeLevel:    GetPlainLevelEncoder(),
 		EncodeTime:     zapcore.TimeEncoderOfLayout(timeFormat),
 		EncodeDuration: zapcore.SecondsDurationEncoder,
 		EncodeCaller:   zapcore.ShortCallerEncoder,

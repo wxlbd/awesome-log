@@ -1,6 +1,8 @@
 package internal
 
 import (
+	"fmt"
+
 	"github.com/fatih/color"
 	"go.uber.org/zap/zapcore"
 )
@@ -36,16 +38,16 @@ func GetColorLevelEncoder() zapcore.LevelEncoder {
 	return func(level zapcore.Level, enc zapcore.PrimitiveArrayEncoder) {
 		colorFunc, ok := ColorFuncs[level]
 		if !ok {
-			enc.AppendString(level.CapitalString())
+			enc.AppendString(fmt.Sprintf("%-5s", level.CapitalString()))
 			return
 		}
-		enc.AppendString(colorFunc("%-7s", level.CapitalString()))
+		enc.AppendString(colorFunc("%-5s", level.CapitalString()))
 	}
 }
 
 // GetPlainLevelEncoder 获取普通的级别编码器
 func GetPlainLevelEncoder() zapcore.LevelEncoder {
 	return func(level zapcore.Level, enc zapcore.PrimitiveArrayEncoder) {
-		enc.AppendString(level.CapitalString())
+		enc.AppendString(fmt.Sprintf("%-5s", level.CapitalString()))
 	}
 }
